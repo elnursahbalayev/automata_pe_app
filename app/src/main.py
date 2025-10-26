@@ -1,157 +1,224 @@
 import flet as ft
+import pandas as pd
 
 
-def main(page: ft.Page):
-    page.title = "NavigationBar Routing Example"
-    page.vertical_alignment = ft.MainAxisAlignment.START
+class ProductionTab:
+    def __init__(self, page):
+        self.page = page
+        self.file_picker = None  # Will be set later
+        self.pvt_file_picker = None  # PVT file picker
 
-    # --- Define State for Page 2 (Counter) ---
-    # We define this control in the main() scope so its state
-    # is preserved when we switch pages.
-    txt_number = ft.Text("0", size=40, weight=ft.FontWeight.BOLD)
-
-    def minus_click(e):
-        txt_number.value = str(int(txt_number.value) - 1)
-        page.update()
-
-    def plus_click(e):
-        txt_number.value = str(int(txt_number.value) + 1)
-        page.update()
-
-    # --- Define Page Content Builders ---
-    # These functions create the content for each "page".
-
-    def create_home_view():
-        """Content for the Home page."""
-        return ft.Column(
-            [
-                ft.Icon(ft.Icons.HOME, size=100, color=ft.Colors.BLUE_600),
-                ft.Text("Welcome Home!", size=30, weight=ft.FontWeight.BOLD),
-                ft.Text("This is the main page."),
-                ft.Text("Click the icons below to navigate."),
-            ],
-            horizontal_alignment=ft.CrossAxisAlignment.CENTER,
-            spacing=20,
-            expand=True,
-            alignment=ft.MainAxisAlignment.CENTER
+        # UI elements for production data
+        self.result_text = ft.Text(
+            "No file selected.\nRequired columns: (Well, NPDCode, On Stream, Oil, Gas, Water, Date)",
+            size=12
         )
+        self.data_display = ft.Column(scroll=ft.ScrollMode.AUTO, height=200)
 
-    def create_counter_view():
-        """Content for the Counter page. It uses the txt_number from main()."""
-        return ft.Column(
-            [
-                ft.Text("Simple Counter", size=30, weight=ft.FontWeight.BOLD),
-                ft.Text("This page's state (the number) is preserved."),
-                ft.Row(
-                    [
-                        ft.IconButton(ft.Icons.REMOVE_CIRCLE, on_click=minus_click, icon_size=40,
-                                      icon_color=ft.Colors.RED_500),
-                        txt_number,  # This is the stateful control from main()
-                        ft.IconButton(ft.Icons.ADD_CIRCLE, on_click=plus_click, icon_size=40,
-                                      icon_color=ft.Colors.GREEN_500),
+        # UI elements for PVT data
+        self.pvt_result_text = ft.Text(
+            "No PVT file selected.\nRequired columns: (Pressure, Rs, Bo, Bw, Bg)",
+            size=12
+        )
+        self.pvt_data_display = ft.Column(scroll=ft.ScrollMode.AUTO, height=200)
+
+        self.tab = ft.Tab(
+            text='Production',
+            content=ft.Container(
+                content=ft.Column(
+                    controls=[
+                        # Production Data Section
+                        ft.Text("Production Data", size=16, weight=ft.FontWeight.BOLD),
+                        ft.ElevatedButton(
+                            'Upload Montly Production Data',
+                            icon=ft.Icons.UPLOAD_FILE,
+                            on_click=self.pick_file
+                        ),
+                        self.result_text,
+                        self.data_display,
+
+                        ft.Divider(height=10, thickness=2),
+
+                        # PVT Data Section
+                        ft.Text("PVT Data", size=16, weight=ft.FontWeight.BOLD),
+                        ft.ElevatedButton(
+                            'Upload PVT Data',
+                            icon=ft.Icons.UPLOAD_FILE,
+                            on_click=self.pick_pvt_file
+                        ),
+                        self.pvt_result_text,
+                        self.pvt_data_display,
                     ],
-                    alignment=ft.MainAxisAlignment.CENTER,
-                    vertical_alignment=ft.CrossAxisAlignment.CENTER
+                    spacing=10,
+                    scroll=ft.ScrollMode.AUTO,
                 ),
-            ],
-            horizontal_alignment=ft.CrossAxisAlignment.CENTER,
-            spacing=20,
-            expand=True,
-            alignment=ft.MainAxisAlignment.CENTER
-        )
-
-    def create_settings_view():
-        """Content for the Settings page."""
-        return ft.Column(
-            [
-                ft.Text("Settings", size=30, weight=ft.FontWeight.BOLD),
-                ft.TextField(label="Username", width=300, icon=ft.Icons.PERSON),
-                ft.Checkbox(label="Enable notifications (dummy)"),
-                ft.Switch(label="Dark mode (dummy)"),
-            ],
-            horizontal_alignment=ft.CrossAxisAlignment.CENTER,
-            spacing=10,
-            expand=True,
-            alignment=ft.MainAxisAlignment.CENTER
-        )
-
-    # --- Navigation and Routing Logic ---
-
-    # A dictionary mapping routes to their content-builder function and nav index
-    routes = {
-        "/": (create_home_view, 0),
-        "/counter": (create_counter_view, 1),
-        "/settings": (create_settings_view, 2),
-    }
-
-    # A list to easily map a nav index back to a route
-    route_list = ["/", "/counter", "/settings"]
-
-    # Create the NavigationBar
-    nav_bar = ft.NavigationBar(
-        selected_index=0,
-        destinations=[
-            ft.NavigationBarDestination(icon=ft.Icons.HOME_OUTLINED, selected_icon=ft.Icons.HOME, label="Home"),
-            ft.NavigationBarDestination(icon=ft.Icons.CALCULATE_OUTLINED, selected_icon=ft.Icons.CALCULATE,
-                                     label="Counter"),
-            ft.NavigationBarDestination(icon=ft.Icons.SETTINGS_OUTLINED, selected_icon=ft.Icons.SETTINGS,
-                                     label="Settings"),
-        ]
-    )
-
-    def route_change(route):
-        """
-        This is the main function that handles navigation.
-        It's called every time page.route changes.
-        """
-        route_path = page.route
-
-        # Default to home if route is not found
-        if route_path not in routes:
-            route_path = "/"
-
-        # Get the builder function and nav index for the current route
-        content_builder, nav_index = routes[route_path]
-
-        # 1. Clear the existing page content
-        page.views.clear()
-
-        # 2. Add a new View
-        page.views.append(
-            ft.View(
-                route=route_path,
-                controls=[
-                    ft.AppBar(title=ft.Text(page.title), bgcolor=ft.Colors.ON_SURFACE_VARIANT),
-                    content_builder()  # Call the builder function to get the page content
-                ],
-                # Add the nav bar to THIS view
-                navigation_bar=nav_bar
+                padding=10,
+                expand=True
             )
         )
 
-        # 3. Update the nav bar's selected index
-        nav_bar.selected_index = nav_index
+    def set_file_picker(self, file_picker):
+        """Set the file picker after it's been added to the page"""
+        self.file_picker = file_picker
 
-        # 4. Update the page
-        page.update()
+    def set_pvt_file_picker(self, pvt_file_picker):
+        """Set the PVT file picker after it's been added to the page"""
+        self.pvt_file_picker = pvt_file_picker
 
-    def nav_change(e):
-        """
-        This function is called when the user clicks a NavigationBar item.
-        It just changes the page route.
-        """
-        selected_index = e.control.selected_index
-        # Use the index to find the corresponding route and go to it
-        page.go(route_list[selected_index])
+    def on_file_selected(self, e: ft.FilePickerResultEvent):
+        if e.files:
+            file = e.files[0]
+            print(f'Production file {file.name}, path: {file.path}')
+            file_path = file.path
 
-    # --- App Initialization ---
+            self.result_text.value = f"Selected: {file.name}"
 
-    # Assign the event handlers
-    page.on_route_change = route_change
-    nav_bar.on_change = nav_change
+            try:
+                # Read CSV file with pandas
+                df = pd.read_csv(file_path)
 
-    # Load the initial route (e.g., "/" or whatever route the user is on)
-    page.go(page.route)
+                # Display basic info
+                info_text = f"\nRows: {len(df)}\nColumns: {len(df.columns)}\n\nColumns: {', '.join(df.columns)}"
+                self.result_text.value += info_text
+
+                # Display first few rows
+                self.data_display.controls.clear()
+                self.data_display.controls.append(
+                    ft.Text("First 5 rows:", weight=ft.FontWeight.BOLD, size=14)
+                )
+                self.data_display.controls.append(
+                    ft.Text(df.head().to_string(), font_family="Courier New", size=10)
+                )
+
+            except Exception as ex:
+                self.result_text.value = f"Error reading CSV: {str(ex)}"
+                self.data_display.controls.clear()
+        else:
+            self.result_text.value = """No file selected.
+Required columns: (Well, NPDCode, On Stream, Oil, Gas, Water, Date)"""
+            self.data_display.controls.clear()
+
+        self.page.update()
+
+    def on_pvt_file_selected(self, e: ft.FilePickerResultEvent):
+        if e.files:
+            file = e.files[0]
+            print(f'PVT file {file.name}, path: {file.path}')
+            file_path = file.path
+
+            self.pvt_result_text.value = f"Selected: {file.name}"
+
+            try:
+                # Read CSV file with pandas
+                df = pd.read_csv(file_path)
+
+                # Display basic info
+                info_text = f"\nRows: {len(df)}\nColumns: {len(df.columns)}\n\nColumns: {', '.join(df.columns)}"
+                self.pvt_result_text.value += info_text
+
+                # Display first few rows
+                self.pvt_data_display.controls.clear()
+                self.pvt_data_display.controls.append(
+                    ft.Text("First 5 rows:", weight=ft.FontWeight.BOLD, size=14)
+                )
+                self.pvt_data_display.controls.append(
+                    ft.Text(df.head().to_string(), font_family="Courier New", size=10)
+                )
+
+            except Exception as ex:
+                self.pvt_result_text.value = f"Error reading CSV: {str(ex)}"
+                self.pvt_data_display.controls.clear()
+        else:
+            self.pvt_result_text.value = """No file selected.
+Required columns: (Pressure, Rs, Bo, Bw, Bg)"""
+            self.pvt_data_display.controls.clear()
+
+        self.page.update()
+
+    def pick_file(self, e):
+        if self.file_picker:
+            self.file_picker.pick_files(
+                allowed_extensions=['csv'],
+                dialog_title='Select a production csv file'
+            )
+
+    def pick_pvt_file(self, e):
+        if self.pvt_file_picker:
+            self.pvt_file_picker.pick_files(
+                allowed_extensions=['csv'],
+                dialog_title='Select a PVT csv file'
+            )
+
+
+class WellLogTab:
+    def __init__(self):
+        self.tab = ft.Tab(
+            text='Well Log',
+            content=ft.Text('Well Log Interpretation')
+        )
+
+
+class DrillingTab:
+    def __init__(self):
+        self.tab = ft.Tab(
+            text='Drilling Risk',
+            content=ft.Text('Drilling Risk Prediction and Prevention')
+        )
+
+
+class TabManager:
+    def __init__(self, page):
+        self.page = page
+        self.selected_index = 0
+        self.animation_duration = 100
+        self.label_color = ft.Colors.RED_500
+        self.divider_color = ft.Colors.BLUE_500
+        self.overlay_color = ft.Colors.BLACK38
+        self.indicator_color = ft.Colors.BLACK
+        self.unselected_label_color = ft.Colors.GREY
+
+        self.production_tab = ProductionTab(self.page)
+        self.well_log_tab = WellLogTab()
+        self.drilling_tab = DrillingTab()
+
+        self.get_tabs()
+
+    def get_tabs(self):
+        # Create and add file pickers to overlay FIRST
+        file_picker = ft.FilePicker(on_result=self.production_tab.on_file_selected)
+        pvt_file_picker = ft.FilePicker(on_result=self.production_tab.on_pvt_file_selected)
+
+        self.page.overlay.append(file_picker)
+        self.page.overlay.append(pvt_file_picker)
+
+        self.production_tab.set_file_picker(file_picker)
+        self.production_tab.set_pvt_file_picker(pvt_file_picker)
+
+        self.tabs = ft.Tabs(
+            selected_index=self.selected_index,
+            animation_duration=self.animation_duration,
+            label_color=self.label_color,
+            divider_color=self.divider_color,
+            overlay_color=self.overlay_color,
+            indicator_color=self.indicator_color,
+            unselected_label_color=self.unselected_label_color,
+            tabs=[
+                self.production_tab.tab,
+                self.well_log_tab.tab,
+                self.drilling_tab.tab
+            ],
+            expand=True
+        )
+
+        self.page.add(self.tabs)
+        return self.page
+
+
+def main(page: ft.Page):
+    page.title = "AUTOMATA ONG"
+    page.vertical_alignment = ft.MainAxisAlignment.START
+
+    TabManager(page)
 
 
 # Run the app
