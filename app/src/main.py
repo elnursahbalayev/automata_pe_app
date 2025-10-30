@@ -517,7 +517,7 @@ class PVTAnalysisTab:
 
 
 def main(page: ft.Page):
-    page.title = "AUTOMATA ONG - Production Data Analysis"
+    page.title = "AUTOMATA ONG"
     page.vertical_alignment = ft.MainAxisAlignment.START
     page.scroll = ft.ScrollMode.AUTO
 
@@ -532,7 +532,7 @@ def main(page: ft.Page):
     # Create tabs control
     tabs = ft.Tabs(
         selected_index=0,
-        animation_duration=300,
+        animation_duration=10,
         tabs=[
             data_loading_tab.tab,
             pvt_analysis_tab.tab,
