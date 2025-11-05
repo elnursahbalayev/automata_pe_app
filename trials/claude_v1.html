@@ -1,0 +1,867 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Well Log Interpretation Platform</title>
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <script src="https://cdn.plot.ly/plotly-2.27.0.min.js"></script>
+    <style>
+        body {
+            background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+        }
+
+        .glass-panel {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+        }
+
+        .metric-card {
+            background: linear-gradient(135deg, rgba(59, 130, 246, 0.1) 0%, rgba(147, 51, 234, 0.1) 100%);
+            border: 1px solid rgba(59, 130, 246, 0.3);
+            transition: all 0.3s ease;
+        }
+
+        .metric-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 12px 24px rgba(59, 130, 246, 0.2);
+        }
+
+        .zone-indicator {
+            animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
+        }
+
+        .log-track {
+            min-height: 600px;
+        }
+
+        .lithology-bar {
+            writing-mode: vertical-rl;
+            text-orientation: mixed;
+        }
+
+        .interpretation-badge {
+            background: linear-gradient(90deg, #10b981 0%, #059669 100%);
+            box-shadow: 0 0 20px rgba(16, 185, 129, 0.3);
+        }
+
+        .ai-indicator {
+            animation: glow 2s ease-in-out infinite;
+        }
+
+        @keyframes glow {
+            0%, 100% { box-shadow: 0 0 5px rgba(139, 92, 246, 0.5); }
+            50% { box-shadow: 0 0 20px rgba(139, 92, 246, 0.8), 0 0 30px rgba(139, 92, 246, 0.5); }
+        }
+    </style>
+</head>
+<body class="text-gray-100">
+    <!-- Header -->
+    <header class="glass-panel mb-6">
+        <div class="container mx-auto px-6 py-4">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center space-x-4">
+                    <div class="w-12 h-12 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center">
+                        <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
+                        </svg>
+                    </div>
+                    <div>
+                        <h1 class="text-2xl font-bold bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent">
+                            AI Well Log Interpretation
+                        </h1>
+                        <p class="text-sm text-gray-400">Intelligent Subsurface Analysis Platform</p>
+                    </div>
+                </div>
+                <div class="flex items-center space-x-3">
+                    <div class="ai-indicator px-4 py-2 bg-purple-600 rounded-lg text-sm font-semibold">
+                        <span class="inline-block w-2 h-2 bg-green-400 rounded-full mr-2"></span>
+                        AI Active
+                    </div>
+                    <button id="exportBtn" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded-lg text-sm font-semibold transition">
+                        Export Report
+                    </button>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <div class="container mx-auto px-6 pb-8">
+        <!-- Well Information Panel -->
+        <div class="glass-panel rounded-xl p-6 mb-6">
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                <div>
+                    <label class="block text-sm text-gray-400 mb-2">Well Name</label>
+                    <select id="wellSelector" class="w-full bg-slate-800 border border-slate-700 rounded-lg px-4 py-2 text-white">
+                        <option value="APEX-001">APEX-001</option>
+                        <option value="HORIZON-42">HORIZON-42</option>
+                        <option value="DEEP-EXPLORER-7">DEEP-EXPLORER-7</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-sm text-gray-400 mb-2">Field</label>
+                    <input type="text" value="Thunder Horse Field" readonly class="w-full bg-slate-800 border border-slate-700 rounded-lg px-4 py-2 text-white">
+                </div>
+                <div>
+                    <label class="block text-sm text-gray-400 mb-2">Depth Range (ft)</label>
+                    <input type="text" id="depthRange" value="8000 - 10000" readonly class="w-full bg-slate-800 border border-slate-700 rounded-lg px-4 py-2 text-white">
+                </div>
+                <div>
+                    <label class="block text-sm text-gray-400 mb-2">Analysis Date</label>
+                    <input type="text" id="analysisDate" readonly class="w-full bg-slate-800 border border-slate-700 rounded-lg px-4 py-2 text-white">
+                </div>
+            </div>
+        </div>
+
+        <!-- Key Metrics Dashboard -->
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+            <div class="metric-card rounded-xl p-6">
+                <div class="flex items-center justify-between mb-2">
+                    <h3 class="text-sm font-semibold text-gray-400">Pay Zones Identified</h3>
+                    <svg class="w-5 h-5 text-green-400" fill="currentColor" viewBox="0 0 20 20">
+                        <path d="M9 2a1 1 0 000 2h2a1 1 0 100-2H9z"></path>
+                        <path fill-rule="evenodd" d="M4 5a2 2 0 012-2 3 3 0 003 3h2a3 3 0 003-3 2 2 0 012 2v11a2 2 0 01-2 2H6a2 2 0 01-2-2V5zm9.707 5.707a1 1 0 00-1.414-1.414L9 12.586l-1.293-1.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path>
+                    </svg>
+                </div>
+                <p class="text-3xl font-bold text-white" id="payZoneCount">3</p>
+                <p class="text-sm text-green-400 mt-1">High Confidence</p>
+            </div>
+
+            <div class="metric-card rounded-xl p-6">
+                <div class="flex items-center justify-between mb-2">
+                    <h3 class="text-sm font-semibold text-gray-400">Avg Porosity</h3>
+                    <svg class="w-5 h-5 text-blue-400" fill="currentColor" viewBox="0 0 20 20">
+                        <path d="M2 11a1 1 0 011-1h2a1 1 0 011 1v5a1 1 0 01-1 1H3a1 1 0 01-1-1v-5zM8 7a1 1 0 011-1h2a1 1 0 011 1v9a1 1 0 01-1 1H9a1 1 0 01-1-1V7zM14 4a1 1 0 011-1h2a1 1 0 011 1v12a1 1 0 01-1 1h-2a1 1 0 01-1-1V4z"></path>
+                    </svg>
+                </div>
+                <p class="text-3xl font-bold text-white" id="avgPorosity">18.5%</p>
+                <p class="text-sm text-blue-400 mt-1">Excellent Quality</p>
+            </div>
+
+            <div class="metric-card rounded-xl p-6">
+                <div class="flex items-center justify-between mb-2">
+                    <h3 class="text-sm font-semibold text-gray-400">Hydrocarbon Saturation</h3>
+                    <svg class="w-5 h-5 text-yellow-400" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M12.395 2.553a1 1 0 00-1.45-.385c-.345.23-.614.558-.822.88-.214.33-.403.713-.57 1.116-.334.804-.614 1.768-.84 2.734a31.365 31.365 0 00-.613 3.58 2.64 2.64 0 01-.945-1.067c-.328-.68-.398-1.534-.398-2.654A1 1 0 005.05 6.05 6.981 6.981 0 003 11a7 7 0 1011.95-4.95c-.592-.591-.98-.985-1.348-1.467-.363-.476-.724-1.063-1.207-2.03zM12.12 15.12A3 3 0 017 13s.879.5 2.5.5c0-1 .5-4 1.25-4.5.5 1 .786 1.293 1.371 1.879A2.99 2.99 0 0113 13a2.99 2.99 0 01-.879 2.121z" clip-rule="evenodd"></path>
+                    </svg>
+                </div>
+                <p class="text-3xl font-bold text-white" id="avgSaturation">72%</p>
+                <p class="text-sm text-yellow-400 mt-1">Oil Bearing</p>
+            </div>
+
+            <div class="metric-card rounded-xl p-6">
+                <div class="flex items-center justify-between mb-2">
+                    <h3 class="text-sm font-semibold text-gray-400">Net Pay Thickness</h3>
+                    <svg class="w-5 h-5 text-purple-400" fill="currentColor" viewBox="0 0 20 20">
+                        <path d="M3 12v3c0 1.657 3.134 3 7 3s7-1.343 7-3v-3c0 1.657-3.134 3-7 3s-7-1.343-7-3z"></path>
+                        <path d="M3 7v3c0 1.657 3.134 3 7 3s7-1.343 7-3V7c0 1.657-3.134 3-7 3S3 8.657 3 7z"></path>
+                        <path d="M17 5c0 1.657-3.134 3-7 3S3 6.657 3 5s3.134-3 7-3 7 1.343 7 3z"></path>
+                    </svg>
+                </div>
+                <p class="text-3xl font-bold text-white" id="netPay">145 ft</p>
+                <p class="text-sm text-purple-400 mt-1">Commercial</p>
+            </div>
+        </div>
+
+        <!-- Main Content Grid -->
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <!-- Well Log Visualization (2/3 width) -->
+            <div class="lg:col-span-2">
+                <div class="glass-panel rounded-xl p-6">
+                    <div class="flex items-center justify-between mb-4">
+                        <h2 class="text-xl font-bold text-white">Well Log Analysis</h2>
+                        <div class="flex space-x-2">
+                            <button class="log-toggle px-3 py-1 bg-blue-600 rounded text-sm" data-log="all">All</button>
+                            <button class="log-toggle px-3 py-1 bg-slate-700 rounded text-sm" data-log="gr">GR</button>
+                            <button class="log-toggle px-3 py-1 bg-slate-700 rounded text-sm" data-log="resistivity">RES</button>
+                            <button class="log-toggle px-3 py-1 bg-slate-700 rounded text-sm" data-log="porosity">POR</button>
+                        </div>
+                    </div>
+                    <div id="wellLogPlot" class="log-track"></div>
+                </div>
+
+                <!-- Depth Selector -->
+                <div class="glass-panel rounded-xl p-6 mt-6">
+                    <h3 class="text-lg font-bold text-white mb-4">Depth Selection</h3>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm text-gray-400 mb-2">Top Depth (ft)</label>
+                            <input type="number" id="topDepth" value="8000" min="8000" max="10000" class="w-full bg-slate-800 border border-slate-700 rounded-lg px-4 py-2 text-white">
+                        </div>
+                        <div>
+                            <label class="block text-sm text-gray-400 mb-2">Bottom Depth (ft)</label>
+                            <input type="number" id="bottomDepth" value="10000" min="8000" max="10000" class="w-full bg-slate-800 border border-slate-700 rounded-lg px-4 py-2 text-white">
+                        </div>
+                    </div>
+                    <button id="updateDepthBtn" class="w-full mt-4 px-4 py-2 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 rounded-lg font-semibold transition">
+                        Update View
+                    </button>
+                </div>
+            </div>
+
+            <!-- AI Interpretation Panel (1/3 width) -->
+            <div class="lg:col-span-1">
+                <!-- AI Lithology Interpretation -->
+                <div class="glass-panel rounded-xl p-6 mb-6">
+                    <div class="flex items-center space-x-2 mb-4">
+                        <div class="w-8 h-8 bg-gradient-to-br from-purple-500 to-pink-500 rounded-lg flex items-center justify-center">
+                            <svg class="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 20 20">
+                                <path d="M13 7H7v6h6V7z"></path>
+                                <path fill-rule="evenodd" d="M7 2a1 1 0 012 0v1h2V2a1 1 0 112 0v1h2a2 2 0 012 2v2h1a1 1 0 110 2h-1v2h1a1 1 0 110 2h-1v2a2 2 0 01-2 2h-2v1a1 1 0 11-2 0v-1H9v1a1 1 0 11-2 0v-1H5a2 2 0 01-2-2v-2H2a1 1 0 110-2h1V9H2a1 1 0 010-2h1V5a2 2 0 012-2h2V2zM5 5h10v10H5V5z" clip-rule="evenodd"></path>
+                            </svg>
+                        </div>
+                        <h3 class="text-lg font-bold text-white">AI Lithology</h3>
+                    </div>
+                    <div id="lithologyChart" style="height: 300px;"></div>
+                </div>
+
+                <!-- Pay Zone Summary -->
+                <div class="glass-panel rounded-xl p-6 mb-6">
+                    <h3 class="text-lg font-bold text-white mb-4">Pay Zones</h3>
+                    <div id="payZoneList" class="space-y-3">
+                        <!-- Pay zones will be dynamically added here -->
+                    </div>
+                </div>
+
+                <!-- AI Recommendations -->
+                <div class="glass-panel rounded-xl p-6">
+                    <h3 class="text-lg font-bold text-white mb-4">AI Recommendations</h3>
+                    <div class="space-y-3" id="recommendations">
+                        <!-- Recommendations will be dynamically added here -->
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Petrophysical Analysis -->
+        <div class="glass-panel rounded-xl p-6 mt-6">
+            <h2 class="text-xl font-bold text-white mb-4">Petrophysical Properties</h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div id="porosityHistogram"></div>
+                <div id="saturationCrossplot"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Generate realistic well log data
+        function generateWellLogData() {
+            const depths = [];
+            const gr = [];
+            const resistivity_deep = [];
+            const resistivity_shallow = [];
+            const density = [];
+            const neutron = [];
+            const sonic = [];
+            const lithology = [];
+            const porosity = [];
+            const waterSat = [];
+
+            // Depth range: 8000 to 10000 ft
+            for (let depth = 8000; depth <= 10000; depth += 2) {
+                depths.push(depth);
+
+                // Define geological zones with different properties
+                let zone;
+                if (depth < 8400) {
+                    zone = 'shale'; // Upper shale
+                } else if (depth < 8600) {
+                    zone = 'sand'; // Pay zone 1
+                } else if (depth < 8900) {
+                    zone = 'shaly_sand'; // Transition
+                } else if (depth < 9200) {
+                    zone = 'sand'; // Pay zone 2
+                } else if (depth < 9500) {
+                    zone = 'limestone'; // Carbonate
+                } else if (depth < 9700) {
+                    zone = 'sand'; // Pay zone 3
+                } else {
+                    zone = 'shale'; // Lower shale
+                }
+
+                lithology.push(zone);
+
+                // Generate realistic values based on lithology
+                const noise = () => (Math.random() - 0.5) * 10;
+
+                switch(zone) {
+                    case 'shale':
+                        gr.push(90 + noise());
+                        resistivity_deep.push(2 + Math.random() * 3);
+                        resistivity_shallow.push(2 + Math.random() * 3);
+                        density.push(2.5 + Math.random() * 0.2);
+                        neutron.push(0.35 + Math.random() * 0.1);
+                        sonic.push(100 + noise());
+                        porosity.push(5 + Math.random() * 5);
+                        waterSat.push(95 + Math.random() * 5);
+                        break;
+                    case 'sand':
+                        gr.push(30 + noise());
+                        resistivity_deep.push(50 + Math.random() * 100);
+                        resistivity_shallow.push(40 + Math.random() * 80);
+                        density.push(2.2 + Math.random() * 0.15);
+                        neutron.push(0.15 + Math.random() * 0.1);
+                        sonic.push(60 + noise());
+                        porosity.push(15 + Math.random() * 10);
+                        waterSat.push(20 + Math.random() * 20);
+                        break;
+                    case 'shaly_sand':
+                        gr.push(60 + noise());
+                        resistivity_deep.push(10 + Math.random() * 20);
+                        resistivity_shallow.push(8 + Math.random() * 15);
+                        density.push(2.35 + Math.random() * 0.15);
+                        neutron.push(0.25 + Math.random() * 0.1);
+                        sonic.push(80 + noise());
+                        porosity.push(10 + Math.random() * 8);
+                        waterSat.push(60 + Math.random() * 20);
+                        break;
+                    case 'limestone':
+                        gr.push(20 + noise());
+                        resistivity_deep.push(100 + Math.random() * 200);
+                        resistivity_shallow.push(90 + Math.random() * 180);
+                        density.push(2.7 + Math.random() * 0.1);
+                        neutron.push(0.05 + Math.random() * 0.08);
+                        sonic.push(50 + noise());
+                        porosity.push(12 + Math.random() * 8);
+                        waterSat.push(25 + Math.random() * 15);
+                        break;
+                }
+            }
+
+            return {
+                depth: depths,
+                gr: gr,
+                resistivity_deep: resistivity_deep,
+                resistivity_shallow: resistivity_shallow,
+                density: density,
+                neutron: neutron,
+                sonic: sonic,
+                lithology: lithology,
+                porosity: porosity,
+                waterSat: waterSat
+            };
+        }
+
+        // Global data
+        let wellData = generateWellLogData();
+
+        // Initialize the application
+        function initializeApp() {
+            // Set current date
+            document.getElementById('analysisDate').value = new Date().toLocaleDateString();
+
+            // Create well log plot
+            createWellLogPlot();
+
+            // Create lithology chart
+            createLithologyChart();
+
+            // Create petrophysical plots
+            createPorosityHistogram();
+            createSaturationCrossplot();
+
+            // Identify and display pay zones
+            identifyPayZones();
+
+            // Generate AI recommendations
+            generateRecommendations();
+
+            // Setup event listeners
+            setupEventListeners();
+        }
+
+        function createWellLogPlot() {
+            const data = wellData;
+
+            // Create subplots for different log tracks
+            const trace1 = {
+                x: data.gr,
+                y: data.depth,
+                name: 'Gamma Ray',
+                type: 'scatter',
+                mode: 'lines',
+                line: { color: '#10b981', width: 1.5 },
+                xaxis: 'x1',
+                yaxis: 'y'
+            };
+
+            const trace2 = {
+                x: data.resistivity_deep,
+                y: data.depth,
+                name: 'Deep Resistivity',
+                type: 'scatter',
+                mode: 'lines',
+                line: { color: '#ef4444', width: 1.5 },
+                xaxis: 'x2',
+                yaxis: 'y'
+            };
+
+            const trace3 = {
+                x: data.resistivity_shallow,
+                y: data.depth,
+                name: 'Shallow Resistivity',
+                type: 'scatter',
+                mode: 'lines',
+                line: { color: '#f59e0b', width: 1.5, dash: 'dot' },
+                xaxis: 'x2',
+                yaxis: 'y'
+            };
+
+            const trace4 = {
+                x: data.density,
+                y: data.depth,
+                name: 'Bulk Density',
+                type: 'scatter',
+                mode: 'lines',
+                line: { color: '#3b82f6', width: 1.5 },
+                xaxis: 'x3',
+                yaxis: 'y'
+            };
+
+            const trace5 = {
+                x: data.neutron.map(v => v * 100),
+                y: data.depth,
+                name: 'Neutron Porosity',
+                type: 'scatter',
+                mode: 'lines',
+                line: { color: '#8b5cf6', width: 1.5 },
+                xaxis: 'x4',
+                yaxis: 'y'
+            };
+
+            // Add pay zone highlights
+            const payZones = identifyPayZonesData();
+            const shapes = payZones.map(zone => ({
+                type: 'rect',
+                xref: 'paper',
+                yref: 'y',
+                x0: 0,
+                x1: 1,
+                y0: zone.top,
+                y1: zone.bottom,
+                fillcolor: 'rgba(34, 197, 94, 0.15)',
+                line: { width: 0 },
+                layer: 'below'
+            }));
+
+            const layout = {
+                title: {
+                    text: 'Multi-Track Well Log Display',
+                    font: { color: '#fff', size: 16 }
+                },
+                paper_bgcolor: 'rgba(0,0,0,0)',
+                plot_bgcolor: 'rgba(30, 41, 59, 0.5)',
+                showlegend: true,
+                legend: {
+                    font: { color: '#fff' },
+                    bgcolor: 'rgba(30, 41, 59, 0.8)',
+                    bordercolor: 'rgba(255, 255, 255, 0.2)',
+                    borderwidth: 1
+                },
+                yaxis: {
+                    title: 'Depth (ft)',
+                    autorange: 'reversed',
+                    gridcolor: 'rgba(255, 255, 255, 0.1)',
+                    titlefont: { color: '#fff' },
+                    tickfont: { color: '#fff' }
+                },
+                xaxis: {
+                    title: 'GR (API)',
+                    domain: [0, 0.18],
+                    gridcolor: 'rgba(255, 255, 255, 0.1)',
+                    titlefont: { color: '#10b981', size: 11 },
+                    tickfont: { color: '#fff' }
+                },
+                xaxis2: {
+                    title: 'Resistivity (ohm.m)',
+                    domain: [0.22, 0.42],
+                    type: 'log',
+                    gridcolor: 'rgba(255, 255, 255, 0.1)',
+                    titlefont: { color: '#ef4444', size: 11 },
+                    tickfont: { color: '#fff' }
+                },
+                xaxis3: {
+                    title: 'RHOB (g/cc)',
+                    domain: [0.46, 0.66],
+                    gridcolor: 'rgba(255, 255, 255, 0.1)',
+                    titlefont: { color: '#3b82f6', size: 11 },
+                    tickfont: { color: '#fff' }
+                },
+                xaxis4: {
+                    title: 'NPHI (%)',
+                    domain: [0.70, 0.90],
+                    gridcolor: 'rgba(255, 255, 255, 0.1)',
+                    titlefont: { color: '#8b5cf6', size: 11 },
+                    tickfont: { color: '#fff' }
+                },
+                shapes: shapes,
+                height: 600,
+                margin: { t: 50, b: 80 }
+            };
+
+            const config = {
+                responsive: true,
+                displayModeBar: true,
+                modeBarButtonsToRemove: ['lasso2d', 'select2d'],
+                displaylogo: false
+            };
+
+            Plotly.newPlot('wellLogPlot', [trace1, trace2, trace3, trace4, trace5], layout, config);
+        }
+
+        function createLithologyChart() {
+            const data = wellData;
+
+            // Count lithology types
+            const lithCounts = {};
+            data.lithology.forEach(lith => {
+                lithCounts[lith] = (lithCounts[lith] || 0) + 1;
+            });
+
+            const lithColors = {
+                'shale': '#64748b',
+                'sand': '#fbbf24',
+                'shaly_sand': '#a78bfa',
+                'limestone': '#60a5fa'
+            };
+
+            const lithLabels = {
+                'shale': 'Shale',
+                'sand': 'Sandstone',
+                'shaly_sand': 'Shaly Sand',
+                'limestone': 'Limestone'
+            };
+
+            const pieData = [{
+                values: Object.values(lithCounts),
+                labels: Object.keys(lithCounts).map(k => lithLabels[k]),
+                type: 'pie',
+                hole: 0.4,
+                marker: {
+                    colors: Object.keys(lithCounts).map(k => lithColors[k])
+                },
+                textinfo: 'label+percent',
+                textfont: { color: '#fff' }
+            }];
+
+            const layout = {
+                paper_bgcolor: 'rgba(0,0,0,0)',
+                plot_bgcolor: 'rgba(0,0,0,0)',
+                font: { color: '#fff' },
+                showlegend: false,
+                margin: { t: 0, b: 0, l: 0, r: 0 },
+                height: 300
+            };
+
+            Plotly.newPlot('lithologyChart', pieData, layout, { responsive: true, displaylogo: false });
+        }
+
+        function identifyPayZonesData() {
+            const data = wellData;
+            const payZones = [];
+            let inPayZone = false;
+            let zoneStart = null;
+
+            for (let i = 0; i < data.depth.length; i++) {
+                const isPay = data.lithology[i] === 'sand' &&
+                             data.porosity[i] > 12 &&
+                             data.waterSat[i] < 50 &&
+                             data.resistivity_deep[i] > 20;
+
+                if (isPay && !inPayZone) {
+                    zoneStart = data.depth[i];
+                    inPayZone = true;
+                } else if (!isPay && inPayZone) {
+                    payZones.push({
+                        top: zoneStart,
+                        bottom: data.depth[i - 1],
+                        thickness: data.depth[i - 1] - zoneStart
+                    });
+                    inPayZone = false;
+                }
+            }
+
+            return payZones;
+        }
+
+        function identifyPayZones() {
+            const payZones = identifyPayZonesData();
+            const data = wellData;
+
+            const payZoneList = document.getElementById('payZoneList');
+            payZoneList.innerHTML = '';
+
+            payZones.forEach((zone, index) => {
+                // Calculate average properties for this zone
+                const zoneIndices = data.depth.map((d, i) => d >= zone.top && d <= zone.bottom ? i : -1).filter(i => i >= 0);
+                const avgPor = zoneIndices.reduce((sum, i) => sum + data.porosity[i], 0) / zoneIndices.length;
+                const avgSw = zoneIndices.reduce((sum, i) => sum + data.waterSat[i], 0) / zoneIndices.length;
+                const avgSh = 100 - avgSw;
+
+                const zoneDiv = document.createElement('div');
+                zoneDiv.className = 'bg-gradient-to-r from-green-900/30 to-emerald-900/30 border border-green-600/50 rounded-lg p-4';
+                zoneDiv.innerHTML = `
+                    <div class="flex items-center justify-between mb-2">
+                        <h4 class="font-bold text-green-400">Pay Zone ${index + 1}</h4>
+                        <span class="zone-indicator px-2 py-1 bg-green-600 rounded text-xs font-semibold">Active</span>
+                    </div>
+                    <div class="grid grid-cols-2 gap-2 text-sm">
+                        <div>
+                            <p class="text-gray-400">Depth</p>
+                            <p class="font-semibold text-white">${zone.top}-${zone.bottom} ft</p>
+                        </div>
+                        <div>
+                            <p class="text-gray-400">Thickness</p>
+                            <p class="font-semibold text-white">${zone.thickness.toFixed(0)} ft</p>
+                        </div>
+                        <div>
+                            <p class="text-gray-400">Porosity</p>
+                            <p class="font-semibold text-white">${avgPor.toFixed(1)}%</p>
+                        </div>
+                        <div>
+                            <p class="text-gray-400">Sh</p>
+                            <p class="font-semibold text-white">${avgSh.toFixed(1)}%</p>
+                        </div>
+                    </div>
+                `;
+                payZoneList.appendChild(zoneDiv);
+            });
+
+            // Update metrics
+            document.getElementById('payZoneCount').textContent = payZones.length;
+            const totalThickness = payZones.reduce((sum, zone) => sum + zone.thickness, 0);
+            document.getElementById('netPay').textContent = `${totalThickness.toFixed(0)} ft`;
+        }
+
+        function generateRecommendations() {
+            const recommendations = [
+                {
+                    icon: '✓',
+                    color: 'green',
+                    text: 'Primary target: Zone 1 (8400-8600 ft) shows excellent reservoir quality',
+                    confidence: 95
+                },
+                {
+                    icon: '⚡',
+                    color: 'blue',
+                    text: 'High resistivity contrast indicates oil-bearing formations',
+                    confidence: 88
+                },
+                {
+                    icon: '📊',
+                    color: 'purple',
+                    text: 'Recommend perforation intervals at identified pay zones',
+                    confidence: 92
+                },
+                {
+                    icon: '🎯',
+                    color: 'yellow',
+                    text: 'Zone 2 (8900-9200 ft) viable for secondary production',
+                    confidence: 85
+                }
+            ];
+
+            const recContainer = document.getElementById('recommendations');
+            recContainer.innerHTML = '';
+
+            recommendations.forEach(rec => {
+                const recDiv = document.createElement('div');
+                recDiv.className = `bg-${rec.color}-900/20 border border-${rec.color}-600/30 rounded-lg p-3`;
+                recDiv.innerHTML = `
+                    <div class="flex items-start space-x-3">
+                        <span class="text-2xl">${rec.icon}</span>
+                        <div class="flex-1">
+                            <p class="text-sm text-gray-200">${rec.text}</p>
+                            <div class="mt-2 flex items-center space-x-2">
+                                <div class="flex-1 bg-gray-700 rounded-full h-1.5">
+                                    <div class="bg-${rec.color}-500 h-1.5 rounded-full" style="width: ${rec.confidence}%"></div>
+                                </div>
+                                <span class="text-xs text-gray-400">${rec.confidence}%</span>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                recContainer.appendChild(recDiv);
+            });
+        }
+
+        function createPorosityHistogram() {
+            const data = wellData;
+
+            const trace = {
+                x: data.porosity,
+                type: 'histogram',
+                marker: {
+                    color: 'rgba(59, 130, 246, 0.7)',
+                    line: {
+                        color: 'rgba(59, 130, 246, 1)',
+                        width: 1
+                    }
+                },
+                nbinsx: 30
+            };
+
+            const layout = {
+                title: {
+                    text: 'Porosity Distribution',
+                    font: { color: '#fff', size: 14 }
+                },
+                xaxis: {
+                    title: 'Porosity (%)',
+                    gridcolor: 'rgba(255, 255, 255, 0.1)',
+                    titlefont: { color: '#fff' },
+                    tickfont: { color: '#fff' }
+                },
+                yaxis: {
+                    title: 'Frequency',
+                    gridcolor: 'rgba(255, 255, 255, 0.1)',
+                    titlefont: { color: '#fff' },
+                    tickfont: { color: '#fff' }
+                },
+                paper_bgcolor: 'rgba(0,0,0,0)',
+                plot_bgcolor: 'rgba(30, 41, 59, 0.5)',
+                height: 300,
+                margin: { t: 40, b: 60, l: 60, r: 20 }
+            };
+
+            Plotly.newPlot('porosityHistogram', [trace], layout, { responsive: true, displaylogo: false });
+        }
+
+        function createSaturationCrossplot() {
+            const data = wellData;
+
+            // Color by lithology
+            const colors = data.lithology.map(lith => {
+                switch(lith) {
+                    case 'shale': return 'rgba(100, 116, 139, 0.7)';
+                    case 'sand': return 'rgba(251, 191, 36, 0.7)';
+                    case 'shaly_sand': return 'rgba(167, 139, 250, 0.7)';
+                    case 'limestone': return 'rgba(96, 165, 250, 0.7)';
+                }
+            });
+
+            const trace = {
+                x: data.porosity,
+                y: data.waterSat,
+                mode: 'markers',
+                type: 'scatter',
+                marker: {
+                    size: 6,
+                    color: colors,
+                    line: {
+                        color: 'rgba(255, 255, 255, 0.3)',
+                        width: 0.5
+                    }
+                },
+                text: data.depth.map(d => `Depth: ${d} ft`),
+                hovertemplate: '%{text}<br>Porosity: %{x:.1f}%<br>Sw: %{y:.1f}%<extra></extra>'
+            };
+
+            const layout = {
+                title: {
+                    text: 'Porosity vs Water Saturation',
+                    font: { color: '#fff', size: 14 }
+                },
+                xaxis: {
+                    title: 'Porosity (%)',
+                    gridcolor: 'rgba(255, 255, 255, 0.1)',
+                    titlefont: { color: '#fff' },
+                    tickfont: { color: '#fff' }
+                },
+                yaxis: {
+                    title: 'Water Saturation (%)',
+                    gridcolor: 'rgba(255, 255, 255, 0.1)',
+                    titlefont: { color: '#fff' },
+                    tickfont: { color: '#fff' }
+                },
+                paper_bgcolor: 'rgba(0,0,0,0)',
+                plot_bgcolor: 'rgba(30, 41, 59, 0.5)',
+                height: 300,
+                margin: { t: 40, b: 60, l: 60, r: 20 }
+            };
+
+            Plotly.newPlot('saturationCrossplot', [trace], layout, { responsive: true, displaylogo: false });
+        }
+
+        function setupEventListeners() {
+            // Update depth range
+            document.getElementById('updateDepthBtn').addEventListener('click', function() {
+                const topDepth = parseInt(document.getElementById('topDepth').value);
+                const bottomDepth = parseInt(document.getElementById('bottomDepth').value);
+
+                if (topDepth >= bottomDepth) {
+                    alert('Top depth must be less than bottom depth');
+                    return;
+                }
+
+                Plotly.relayout('wellLogPlot', {
+                    'yaxis.range': [bottomDepth, topDepth]
+                });
+            });
+
+            // Well selector
+            document.getElementById('wellSelector').addEventListener('change', function() {
+                // Regenerate data for new well
+                wellData = generateWellLogData();
+                createWellLogPlot();
+                createLithologyChart();
+                createPorosityHistogram();
+                createSaturationCrossplot();
+                identifyPayZones();
+                updateMetrics();
+            });
+
+            // Export functionality
+            document.getElementById('exportBtn').addEventListener('click', function() {
+                generatePDFReport();
+            });
+
+            // Log toggle buttons
+            document.querySelectorAll('.log-toggle').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    document.querySelectorAll('.log-toggle').forEach(b => {
+                        b.classList.remove('bg-blue-600');
+                        b.classList.add('bg-slate-700');
+                    });
+                    this.classList.remove('bg-slate-700');
+                    this.classList.add('bg-blue-600');
+                });
+            });
+        }
+
+        function updateMetrics() {
+            const data = wellData;
+
+            // Calculate average porosity
+            const avgPor = data.porosity.reduce((a, b) => a + b, 0) / data.porosity.length;
+            document.getElementById('avgPorosity').textContent = `${avgPor.toFixed(1)}%`;
+
+            // Calculate average hydrocarbon saturation
+            const avgSh = 100 - (data.waterSat.reduce((a, b) => a + b, 0) / data.waterSat.length);
+            document.getElementById('avgSaturation').textContent = `${avgSh.toFixed(0)}%`;
+        }
+
+        function generatePDFReport() {
+            alert('Generating comprehensive well log interpretation report...\n\n' +
+                  'Report includes:\n' +
+                  '✓ Multi-track log displays\n' +
+                  '✓ AI lithology interpretation\n' +
+                  '✓ Pay zone identification\n' +
+                  '✓ Petrophysical analysis\n' +
+                  '✓ Production recommendations\n\n' +
+                  'Export functionality would integrate with backend services.');
+        }
+
+        // Initialize the application when page loads
+        window.addEventListener('load', initializeApp);
+    </script>
+</body>
+</html>
