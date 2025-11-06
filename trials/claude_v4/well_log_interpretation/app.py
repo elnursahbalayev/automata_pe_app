@@ -12,7 +12,7 @@ from scipy.ndimage import gaussian_filter1d
 
 # Initialize the Dash app
 app = dash.Dash(__name__, external_stylesheets=[dbc.themes.BOOTSTRAP, dbc.icons.FONT_AWESOME])
-app.title = "Well Log Interpretation Suite"
+app.title = "AUTOMATA INTELLIGENCE Well Log Interpretation Suite"
 
 
 # ============================================================================
@@ -247,6 +247,8 @@ app.layout = dbc.Container([
     dbc.Row([
         dbc.Col([
             html.Div([
+                html.H1("AUTOMATA INTELLIGENCE",
+                        style={'color': colors['text'], 'fontWeight': 'bold'}),
                 html.H1("🛢️ Well Log Interpretation Suite",
                         style={'color': colors['text'], 'fontWeight': 'bold'}),
                 html.P("AI-Powered Formation Evaluation & Reservoir Characterization",
