@@ -1037,4 +1037,4 @@ def toggle_interval(freq):
 # ============================================================================
 
 if __name__ == '__main__':
-    app.run(debug=False, port=8051, host='127.0.0.1')
+    app.run(debug=False, port=8052, host='127.0.0.1')

@@ -674,4 +674,4 @@ def update_confidence_plot(processed_data):
 # ============================================================================
 
 if __name__ == '__main__':
-    app.run(debug=False, port=8050, host='127.0.0.1')
+    app.run(debug=False, port=8053, host='127.0.0.1')
