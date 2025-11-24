@@ -1,0 +1,40 @@
+/* assets/style.css */
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    margin: 0;
+    padding: 0;
+}
+
+/* Animations */
+@keyframes pulse {
+    0% { opacity: 1; }
+    50% { opacity: 0.7; }
+    100% { opacity: 1; }
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+    width: 10px;
+}
+
+::-webkit-scrollbar-track {
+    background: #1a1f25;
+}
+
+::-webkit-scrollbar-thumb {
+    background: #00d4ff;
+    border-radius: 5px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: #00a8cc;
+}
+
+/* Hover effects */
+._dash-undo-redo {
+    display: none;
+}
+
+.tab--selected {
+    animation: pulse 2s infinite;
+}
