@@ -1,0 +1,109 @@
+/* Global Dark Theme */
+body {
+    background-color: #0b0c10;
+    color: #c5c6c7;
+    font-family: 'Roboto', sans-serif;
+    margin: 0;
+    padding: 0;
+}
+
+/* Cyberpunk Card Styling */
+.card {
+    background-color: #1f2833;
+    border: 1px solid #45a29e;
+    box-shadow: 0 0 10px rgba(69, 162, 158, 0.2);
+    margin-bottom: 20px;
+}
+
+.card-header {
+    background-color: #0b0c10;
+    border-bottom: 1px solid #45a29e;
+    color: #66fcf1;
+    font-weight: bold;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+}
+
+/* Neon Text Utilities */
+.neon-text-green {
+    color: #66fcf1;
+    text-shadow: 0 0 5px #66fcf1;
+}
+
+.neon-text-red {
+    color: #ff0033;
+    text-shadow: 0 0 8px #ff0033;
+    animation: pulse 1s infinite;
+}
+
+/* Camera Feed Container */
+.camera-container {
+    position: relative;
+    width: 100%;
+    height: 400px;
+    background-size: cover;
+    background-position: center;
+    border: 2px solid #45a29e;
+    overflow: hidden;
+}
+
+/* Leak Overlay (The "Hot Spot") */
+.leak-overlay {
+    position: absolute;
+    top: 50%;
+    left: 60%;
+    width: 100px;
+    height: 100px;
+    background: radial-gradient(circle, rgba(255,255,0,0.6) 0%, rgba(255,0,0,0.2) 70%, rgba(0,0,0,0) 100%);
+    border-radius: 50%;
+    opacity: 0;
+    transition: opacity 0.5s ease-in-out;
+    animation: flicker 0.2s infinite alternate;
+}
+
+.leak-overlay.active {
+    opacity: 1;
+}
+
+/* Bounding Box */
+.bounding-box {
+    position: absolute;
+    top: 45%;
+    left: 55%;
+    width: 150px;
+    height: 150px;
+    border: 2px solid #ff0033;
+    box-shadow: 0 0 10px #ff0033;
+    display: none;
+}
+
+.bounding-box.active {
+    display: block;
+}
+
+/* Animations */
+@keyframes pulse {
+    0% { opacity: 1; }
+    50% { opacity: 0.5; }
+    100% { opacity: 1; }
+}
+
+@keyframes flicker {
+    0% { transform: scale(1); opacity: 0.8; }
+    100% { transform: scale(1.1); opacity: 1; }
+}
+
+/* Scrollbar */
+::-webkit-scrollbar {
+    width: 8px;
+}
+::-webkit-scrollbar-track {
+    background: #0b0c10; 
+}
+::-webkit-scrollbar-thumb {
+    background: #45a29e; 
+    border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+    background: #66fcf1; 
+}

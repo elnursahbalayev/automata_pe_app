@@ -802,7 +802,7 @@ app.layout = dbc.Container([
                 dbc.CardBody([
                     html.H5([
                         html.I(className="fas fa-th", style={'marginRight': '10px'}),
-                        "Risk Heat Map"
+                        "Risk Diagram"
                     ], style={'color': colors['primary'], 'marginBottom': '15px'}),
                     dcc.Graph(id='risk-heatmap', style={'height': '220px'})
                 ])

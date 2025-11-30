@@ -1082,4 +1082,4 @@ def update_zone_table(processed_data):
 # ============================================================================
 
 if __name__ == '__main__':
-    app.run(debug=False, port=8053, host='127.0.0.1')
+    app.run(debug=False, port=8051, host='127.0.0.1')

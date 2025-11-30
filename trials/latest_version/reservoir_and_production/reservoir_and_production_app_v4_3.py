@@ -1524,4 +1524,4 @@ def update_steering_recommendations(processed_data):
 # ============================================================================
 
 if __name__ == '__main__':
-    app.run(debug=False, port=8052, host='127.0.0.1')
+    app.run(debug=False, port=8053, host='127.0.0.1')
